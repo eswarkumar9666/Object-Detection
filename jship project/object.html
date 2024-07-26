@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Object Detection with TensorFlow.js</title>
+    <link rel="stylesheet" href="project.css">
+    <!-- Load TensorFlow.js and Coco-SSD model -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+    <style>
+        #output {
+            position: relative;
+            height: 250px;
+            width: 700px;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
+</head>
+<body class="sub1">
+    <h1 style="color: white; padding-top: 100px; padding-left: 50px; font-size: 60px;">Object</h1>
+    <h1 style="color: white; padding-left:60px; font-size: 60px;">&nbsp;&nbsp;Detection</h1>
+    <input type="file" id="fileInput" accept="image/*" class="cont2">
+   <br><br>
+    <div id="output"  style="position: absolute; left: 55%; top: 30%; border-radius: 95px;">
+        <canvas id="canvas"></canvas>
+        <div id="predictions"></div>
+    </div>
+</div>
+
+    <script>
+        async function run() {
+            const model = await cocoSsd.load();
+            const imageElement = document.createElement('img');
+            const fileInput = document.getElementById('fileInput');
+
+            fileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                const imageUrl = URL.createObjectURL(file);
+                imageElement.src = imageUrl;
+                imageElement.onload = async () => {
+                    const predictions = await model.detect(imageElement);
+                    displayPredictions(predictions);
+                };
+            });
+
+            function displayPredictions(predictions) {
+                const canvas = document.getElementById('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = imageElement.width;
+                canvas.height = imageElement.height;
+
+                ctx.drawImage(imageElement, 0, 0);
+                predictions.forEach(prediction => {
+                    const [x, y, width, height] = prediction.bbox;
+                    ctx.strokeStyle = '#00FFFF';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x, y, width, height);
+
+                    const text = `${prediction.class}: ${prediction.score.toFixed(2)}`;
+                    ctx.fillStyle = '#00FFFF';
+                    ctx.font = '18px Arial';
+                    ctx.fillText(text, x, y - 5);
+                });
+
+                const predictionsDiv = document.getElementById('predictions');
+                predictionsDiv.innerHTML = predictions.map(p => `${p.class}: ${p.score.toFixed(2)}`).join('<br>');
+            }
+        }
+
+        run();
+    </script>
+</body>
+</html>
